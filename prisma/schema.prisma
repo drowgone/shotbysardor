@@ -1,7 +1,10 @@
 // PROMPT.md §3 asosidagi sxema. Identifikatorlar inglizcha, izohlar o'zbekcha.
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  // native — lokal dev uchun; debian-openssl-3.0.x — Docker (node:20-slim) runtime uchun.
+  // Ikkalasini birga generatsiya qilsak har xil muhitda ishlaydi.
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
 datasource db {

@@ -1,13 +1,19 @@
 # syntax=docker/dockerfile:1
 # ============================================================
 # shot by sardor — production Docker image
-# Multi-stage build. Runtime'da ffmpeg + Node.js + Prisma bor.
+# Debian slim asosida (Alpine musl'da Prisma OpenSSL bilan muammo)
 # ============================================================
 
-FROM node:20-alpine AS base
-# ffmpeg — video quvurini ishlatish uchun (video preview/thumb generatsiyasi).
-# libc6-compat — sharp'ning glibc'ga bog'liq binarylari uchun.
-RUN apk add --no-cache ffmpeg libc6-compat
+FROM node:20-slim AS base
+# ffmpeg — video quvuri (preview/thumb)
+# openssl + ca-certificates — Prisma schema engine talab qiladi
+# libjemalloc2 (optional) — sharp memory
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      ffmpeg \
+      openssl \
+      ca-certificates \
+      dumb-init \
+ && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 
 # ---- Bog'liqliklar ----
@@ -36,8 +42,8 @@ ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 
 # Xavfsizlik — non-root user ostida ishga tushirish
-RUN addgroup --system --gid 1001 nodejs \
- && adduser --system --uid 1001 nextjs
+RUN groupadd --system --gid 1001 nodejs \
+ && useradd --system --uid 1001 --gid nodejs --home-dir /app --shell /bin/sh nextjs
 
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
@@ -55,4 +61,6 @@ RUN chmod +x docker-entrypoint.sh \
 USER nextjs
 EXPOSE 3000
 
+# `dumb-init` — PID 1 signal handling (Ctrl+C, docker stop) to'g'ri ishlashi uchun
+ENTRYPOINT ["dumb-init", "--"]
 CMD ["./docker-entrypoint.sh"]
