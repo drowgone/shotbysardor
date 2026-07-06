@@ -41,9 +41,16 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 
-# Xavfsizlik — non-root user ostida ishga tushirish
-RUN groupadd --system --gid 1001 nodejs \
- && useradd --system --uid 1001 --gid nodejs --home-dir /app --shell /bin/sh nextjs
+# Xavfsizlik — non-root user ostida ishga tushirish.
+# UID/GID build ARG orqali sozlanadi — bind mount qilingan host `./storage`
+# papkasi bilan ownership mos bo'lishi uchun (default 1000 — ko'pchilik
+# Linux tizimlarida birinchi user UID).
+ARG APP_UID=1000
+ARG APP_GID=1000
+# node:20-slim image-da mavjud `node` user (UID/GID 1000) bilan to'qnashuvni oldini olish
+RUN userdel -f node 2>/dev/null; groupdel node 2>/dev/null; \
+    groupadd --gid ${APP_GID} nodejs \
+ && useradd --uid ${APP_UID} --gid nodejs --home-dir /app --shell /bin/sh nextjs
 
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next

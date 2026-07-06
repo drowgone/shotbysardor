@@ -43,7 +43,14 @@ export function Hero({
   }, [content]);
 
   return (
-    <section className="relative h-[85vh] md:h-[95vh] w-full overflow-hidden bg-[var(--placeholder)] media-protect">
+    <section
+      // `h-screen` — 100vh fallback eski brauzerlar uchun.
+      // Inline `height: 100dvh` — Dynamic Viewport Height. iOS/Android brauzerda
+      // URL bar ochiq/yopiq bo'lganda viewport o'zgarganda avtomatik moslashadi
+      // (100vh bilan mobile Safari'da hero pastdan URL bar orqasiga chiqib ketardi).
+      className="relative h-screen w-full overflow-hidden bg-[var(--placeholder)] media-protect"
+      style={{ height: "100dvh" }}
+    >
       {/* Thumbnail — silliq o'tish uchun blurred placeholder */}
       {content?.thumbUrl && (
         // eslint-disable-next-line @next/next/no-img-element

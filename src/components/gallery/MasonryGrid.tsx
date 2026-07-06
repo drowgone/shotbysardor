@@ -80,7 +80,12 @@ function MasonryCard({ item, priority }: { item: ContentCard; priority?: boolean
       transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
       className="group relative media-protect"
     >
-      <Link href={`/p/${item.slug}`} className="block relative">
+      {/* `scroll={false}` — Next.js default'da yangi sahifada scroll'ni yuqoriga
+          qaytaradi; bu asosiy sahifada tez "sakrash" hosil qilib, ba'zi kartalar
+          orqasidagi "Yana yuklash" tugmasini ko'rsatib yuborardi. Foydalanuvchi
+          tegayotgan kartaning aynan o'z pozitsiyasidan Lightbox ochilishi uchun
+          scroll'ni saqlab qolamiz. */}
+      <Link href={`/p/${item.slug}`} scroll={false} className="block relative">
         <div className="relative rounded-[var(--r-media)] overflow-hidden bg-[var(--placeholder)]">
           <BlurImage
             src={item.thumbUrl}

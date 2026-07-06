@@ -26,6 +26,12 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        # Konteyner ichidagi user UID/GID — host bind mount bilan mos bo'lishi uchun.
+        # `HOST_UID` va `HOST_GID` ni `.env` orqali override qilish mumkin
+        # (masalan `echo "HOST_UID=$(id -u)" >> .env`).
+        APP_UID: ${HOST_UID:-1000}
+        APP_GID: ${HOST_GID:-1000}
     restart: unless-stopped
     depends_on:
       db:
@@ -50,9 +56,11 @@ services:
       - "${APP_PORT:-3000}:3000"
     volumes:
       # `STORAGE_DRIVER=local` bo'lganda barcha yuklamalar (originallar, preview,
-      # kvitansiyalar) shu volume'da saqlanadi — konteyner o'chsa ham qoladi.
-      - shotbysardor_storage:/app/storage
+      # kvitansiyalar) HOST-dagi `./storage` papkasida saqlanadi. Bind mount tanlanishining
+      # sababi: named volume ishlatilganda host-dagi papka bilan sinxron bo'lmaydi va
+      # avval yuklangan kontent konteynerga ko'rinmaydi. Bind mount host bilan bir manba,
+      # backup olish oson (rsync/cp), git tarixiga ta'siri yo'q (`.gitignore`-da).
+      - ./storage:/app/storage
 
 volumes:
   shotbysardor_db:
-  shotbysardor_storage:

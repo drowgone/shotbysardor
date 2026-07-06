@@ -12,6 +12,15 @@ const TRUST_PROXY = ((): boolean => {
 const touchedAt = new Map<string, number>();
 const TOUCH_INTERVAL_MS = 60_000;
 
+// Seans "faol" deb hisoblanadigan oyna: `lastSeenAt` shu vaqt ichida yangilangan
+// bo'lsa qurilma hali ochiq. Undan uzun bo'lsa — brauzer yopilgan / kompyuter
+// o'chirilgan deb hisoblab, seansni avtomatik bekor qilamiz. Bu:
+//   1) Ro'yxatda faqat haqiqiy faol qurilmalar ko'rinishini ta'minlaydi.
+//   2) Master seans faqat faol qurilmalar orasidan tanlanadi — build/restart
+//      yoki uzoq davomsizlikdan keyin joriy qurilma avtomatik master bo'lishi
+//      uchun (eski, ishlatilmagan qurilma master maqomini ushlab turmaydi).
+const ACTIVE_WINDOW_MS = 30 * 60 * 1000;
+
 export async function createAdminSessionRecord(input: {
   username: string;
   ip: string;
@@ -107,8 +116,28 @@ export async function revokeSessionRecord(
   return { ok: res.count > 0 };
 }
 
+// Eskirgan seansiyalarni bekor qilish — `lastSeenAt` `ACTIVE_WINDOW_MS` dan uzoq
+// yangilanmagan bo'lsa avtomatik revoke. Idempotent.
+async function sweepStaleSessions(username: string): Promise<void> {
+  const threshold = new Date(Date.now() - ACTIVE_WINDOW_MS);
+  await prisma.adminSessionRecord
+    .updateMany({
+      where: {
+        username: username.toLowerCase(),
+        revokedAt: null,
+        lastSeenAt: { lt: threshold },
+      },
+      data: { revokedAt: new Date(), revokedBy: "stale" },
+    })
+    .catch(() => {
+      // ignore
+    });
+}
+
 // Foydalanuvchining barcha faol sessiyalarini ro'yxatga olish.
+// Chaqirilishidan oldin eskirganlar avtomatik tozalanadi.
 export async function listActiveSessions(username: string) {
+  await sweepStaleSessions(username);
   return prisma.adminSessionRecord.findMany({
     where: { username: username.toLowerCase(), revokedAt: null },
     orderBy: [{ createdAt: "asc" }],
@@ -124,15 +153,31 @@ export async function listActiveSessions(username: string) {
   });
 }
 
-// "Master" seans — eng qadimgi faol sessiya (eng ko'p vaqtdan buyon ishlayotgan).
-// Faqat shu sessiyadan boshqa sessiyalarni bekor qilish mumkin.
+// "Master" seans — eng qadimgi FAOL sessiya. Eskirganlar chetlab o'tiladi,
+// shuning uchun uzoq foydalanilmagan qurilma master maqomini ushlab turmaydi.
 export async function getMasterSessionId(username: string): Promise<string | null> {
+  await sweepStaleSessions(username);
   const row = await prisma.adminSessionRecord.findFirst({
     where: { username: username.toLowerCase(), revokedAt: null },
     orderBy: { createdAt: "asc" },
     select: { id: true },
   });
   return row?.id ?? null;
+}
+
+// Foydalanuvchining barcha faol sessiyalarini bekor qilish (joriy ham). Credentials
+// (login/parol) o'zgartirilganda chaqiriladi — hamma qurilma qayta login qilishi majbur.
+export async function revokeAllSessions(
+  username: string,
+  by: string,
+): Promise<number> {
+  const res = await prisma.adminSessionRecord
+    .updateMany({
+      where: { username: username.toLowerCase(), revokedAt: null },
+      data: { revokedAt: new Date(), revokedBy: by.slice(0, 64) },
+    })
+    .catch(() => ({ count: 0 }));
+  return res.count;
 }
 
 // Sessiya versiya mos kelmaganida (parol o'zgargan) — hammasini bir zumda bekor qilamiz.

@@ -6,7 +6,7 @@ import { getSetting, setSetting } from "@/lib/settings";
 import { getAdminSession } from "@/lib/session";
 import { clearFail } from "@/lib/rate-limit";
 import { recordAdminAction } from "@/lib/audit";
-import { revokeAllSessionsForVersionMismatch } from "@/lib/admin-session-record";
+import { revokeAllSessions } from "@/lib/admin-session-record";
 import { sha256 } from "@/lib/utils";
 import { prisma } from "@/lib/db";
 import { emit } from "@/lib/live/bus";
@@ -70,34 +70,28 @@ export async function POST(req: NextRequest) {
   if (newUsername) clearFail(`login:user:${newUsername}`);
   clearFail("login:global");
 
-  // Joriy sessiyani yangi versiya bilan qayta saqlaymiz — admin login qilingan holida qoladi.
-  // CSRF tokenini yangilamaymiz, chunki UI joriy tokendan foydalanmoqda.
-  const session = await getAdminSession();
-  session.v = nextVersion;
-  await session.save();
-
-  // Joriy seans yozuvining versiyasini oldindan yangilaymiz — u revoke ostiga tushmasin.
-  if (session.sid) {
-    await prisma.adminSessionRecord
-      .updateMany({
-        where: { id: session.sid, revokedAt: null },
-        data: { sessionVersion: nextVersion },
-      })
-      .catch(() => ({ count: 0 }));
-  }
-  // Boshqa barcha faol seans yozuvlarini bekor qilamiz (joriy seans yozuvi bundan mustasno).
-  const revokedCount = await revokeAllSessionsForVersionMismatch(
-    newUsername ?? oldUsername,
-    nextVersion,
-    session.sid,
+  // Login/parol o'zgardi — hamma qurilmani majburiy qayta login qilishga
+  // yuboramiz (joriy admin ham). Sabab: yangi credentials'ni ishlatib kirish
+  // orqali "men haqiqatan ham egasiman" isbotini talab qilamiz.
+  // MUHIM: seans yozuvlari `oldUsername` bilan yozilgan — login o'zgarsa ham
+  // ular hali eski username bilan indekslangan. Shu sabab revoke `oldUsername`
+  // bilan chaqiriladi. Yangi loginda hech qanday yozuv bo'lmaydi.
+  const revokedCount = await revokeAllSessions(
+    oldUsername,
+    "credentials",
   ).catch(() => 0);
+
+  // Joriy cookie'ni yo'q qilamiz — client keyingi so'rovda 401 oladi va /admin ga
+  // qaytadi. Response'da ham `redirect: "/admin"` maydonini qaytaramiz.
+  const session = await getAdminSession();
+  await session.destroy();
 
   const ipHash = (await sha256(clientIp(req))).slice(0, 24);
   void recordAdminAction({
     actor: newUsername ?? oldUsername,
     ipHash,
     action: "credentials.update",
-    meta: { changes, sessionVersion: nextVersion, revokedOtherSessions: revokedCount },
+    meta: { changes, sessionVersion: nextVersion, revokedSessions: revokedCount },
   });
 
   emit("admin", { action: "credentials.update", meta: { changed: changes } });
@@ -107,5 +101,6 @@ export async function POST(req: NextRequest) {
     changed: changes,
     updatedAt,
     username: newUsername ?? undefined,
+    redirect: "/admin",
   });
 }

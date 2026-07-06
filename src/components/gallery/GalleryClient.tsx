@@ -12,6 +12,37 @@ import { useLiveEvent } from "@/lib/live/use-live";
 
 const BATCH = 40;
 
+type CacheEntry = {
+  items: ContentCard[];
+  hasNext: boolean;
+  total: number;
+  scrollY: number;
+};
+
+function cacheKey(seed: string, filterKey: string) {
+  return `gallery:${seed}:${filterKey}`;
+}
+
+function readCache(seed: string, filterKey: string): CacheEntry | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = sessionStorage.getItem(cacheKey(seed, filterKey));
+    if (!raw) return null;
+    return JSON.parse(raw) as CacheEntry;
+  } catch {
+    return null;
+  }
+}
+
+function writeCache(seed: string, filterKey: string, entry: CacheEntry) {
+  if (typeof window === "undefined") return;
+  try {
+    sessionStorage.setItem(cacheKey(seed, filterKey), JSON.stringify(entry));
+  } catch {
+    // quota — jim
+  }
+}
+
 export function GalleryClient({
   initial,
   meta,
@@ -26,8 +57,10 @@ export function GalleryClient({
   const [hasNext, setHasNext] = useState<boolean>(initial.hasNext);
   const [total, setTotal] = useState<number>(initial.total);
   const [loading, setLoading] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
 
   const filterKey = `${sp.get("janr") ?? ""}|${sp.get("joy") ?? ""}|${sp.get("yil") ?? ""}`;
+  const prevFilterKey = useRef(filterKey);
 
   const reloadFirstBatch = useCallback(() => {
     let abort = false;
@@ -52,13 +85,46 @@ export function GalleryClient({
       abort = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterKey, seed, sp]);
+  }, [filterKey, seed]);
+
+  // Mount: sessionStorage-da avvalgi holat bor bo'lsa tiklaymiz.
+  // (Foydalanuvchi "Yana yuklash" bosib, keyin kontent detailidan qaytganda
+  //  yuklangan itemlar va scroll pozitsiyasi yo'qolib ketmasligi uchun.)
+  useEffect(() => {
+    const c = readCache(seed, filterKey);
+    if (c && c.items.length > initial.items.length) {
+      setItems(c.items);
+      setHasNext(c.hasNext);
+      setTotal(c.total);
+      if (typeof c.scrollY === "number") {
+        // DOM chizilgandan keyin scroll qilamiz.
+        requestAnimationFrame(() => {
+          window.scrollTo({ top: c.scrollY, behavior: "auto" });
+        });
+      }
+    }
+    setHydrated(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Filtr o'zgarganda birinchi 40 tani qayta yuklaymiz.
+  // Mount-da chaqirilmaydi — aks holda keshdan tiklangan itemlar yo'qoladi.
   useEffect(() => {
+    if (!hydrated) return;
+    if (prevFilterKey.current === filterKey) return;
+    // Filtr o'zgardi — eski filter keshini tozalaymiz (yangi qiymatni saqlashdan oldin).
+    const oldKey = prevFilterKey.current;
+    prevFilterKey.current = filterKey;
+    if (typeof window !== "undefined") {
+      try {
+        sessionStorage.removeItem(cacheKey(seed, oldKey));
+      } catch {
+        // jim
+      }
+    }
     const cleanup = reloadFirstBatch();
     return cleanup;
-  }, [reloadFirstBatch]);
+  }, [hydrated, filterKey, reloadFirstBatch, seed]);
 
   // Live: kontent yoki janr/joylashuv o'zgarganda avtomatik yangilash.
   // Debounce timeriga o'xshab ketma-ket event'larni yig'ib bir marta yuklaymiz.
@@ -88,6 +154,32 @@ export function GalleryClient({
       setLoading(false);
     }
   }, [hasNext, loading, items.length, seed, sp]);
+
+  // Har o'zgarishda keshni yangilaymiz — orqaga qaytganda tiklash uchun.
+  useEffect(() => {
+    if (!hydrated) return;
+    writeCache(seed, filterKey, {
+      items,
+      hasNext,
+      total,
+      scrollY: typeof window !== "undefined" ? window.scrollY : 0,
+    });
+  }, [hydrated, items, hasNext, total, seed, filterKey]);
+
+  // Sahifadan chiqishdan oldin (link click / back) scroll pozitsiyasini saqlaymiz.
+  useEffect(() => {
+    if (!hydrated) return;
+    const save = () => {
+      writeCache(seed, filterKey, {
+        items,
+        hasNext,
+        total,
+        scrollY: window.scrollY,
+      });
+    };
+    window.addEventListener("pagehide", save);
+    return () => window.removeEventListener("pagehide", save);
+  }, [hydrated, items, hasNext, total, seed, filterKey]);
 
   return (
     <div className="flex flex-col">

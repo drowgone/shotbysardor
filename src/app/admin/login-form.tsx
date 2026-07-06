@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { User, Lock, Eye, EyeOff, AlertCircle, LogIn, ShieldAlert } from "lucide-react";
 import { uz } from "@/lib/i18n/uz";
@@ -20,6 +20,17 @@ export function LoginForm() {
   const [hp, setHp] = useState("");
   // Forma render qilingan vaqti — juda tez yuborilgan so'rov bot deb hisoblanadi.
   const renderTs = useRef<number>(Date.now());
+
+  // Sozlamalar sahifasida login o'zgartirilgan bo'lsa, yangi loginni bu yerda
+  // avtomatik prefill qilamiz — foydalanuvchi eski loginni yozib xato olmasligi uchun.
+  useEffect(() => {
+    try {
+      const last = localStorage.getItem("admin.lastUsername");
+      if (last) setUsername(last);
+    } catch {
+      // localStorage o'chirilgan / private mode — jim
+    }
+  }, []);
 
   function handlePwKey(e: React.KeyboardEvent<HTMLInputElement>) {
     if (typeof e.getModifierState === "function") {
@@ -58,6 +69,12 @@ export function LoginForm() {
         setPw("");
         setTimeout(() => setShake(false), 400);
       } else {
+        // Muvaffaqiyatli kirish — prefill uchun saqlangan loginni tozalaymiz.
+        try {
+          localStorage.removeItem("admin.lastUsername");
+        } catch {
+          // jim
+        }
         r.push("/admin/boshqaruv");
         r.refresh();
       }

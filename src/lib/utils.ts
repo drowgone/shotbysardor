@@ -139,6 +139,20 @@ export function isMobileUA(ua: string): boolean {
   return /Mobi|Android|iPhone|iPad|iPod|Windows Phone/i.test(ua);
 }
 
+// Baytlarni odam o'qishga qulay qilib: 1.2 KB / 340 MB / 4.7 GB
+export function formatBytes(bytes: number | null | undefined): string {
+  if (bytes == null || Number.isNaN(bytes) || bytes < 0) return "—";
+  if (bytes < 1024) return `${bytes} B`;
+  const units = ["KB", "MB", "GB", "TB"];
+  let n = bytes / 1024;
+  let i = 0;
+  while (n >= 1024 && i < units.length - 1) {
+    n /= 1024;
+    i++;
+  }
+  return `${n < 10 ? n.toFixed(1) : Math.round(n)} ${units[i]}`;
+}
+
 // Asl fayl o'lchamiga qarab sifat rozetkasi: 8K / 4K / 2K / FHD / HD / SD
 export function qualityLabel(
   origWidth: number | null | undefined,

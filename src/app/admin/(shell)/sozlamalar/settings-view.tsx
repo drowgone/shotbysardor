@@ -1786,16 +1786,31 @@ function PasswordChange({
         const parts: string[] = [];
         if (usernameChanged) parts.push("login");
         if (passwordChanged) parts.push("parol");
-        setMsg({ kind: "ok", text: `${parts.join(" va ")} yangilandi` });
-        onSaved?.({
-          username: typeof d?.username === "string" ? d.username : undefined,
-          updatedAt: typeof d?.updatedAt === "string" ? d.updatedAt : undefined,
+        // Yangi loginni localStorage'ga saqlaymiz — login formasi mount'da uni
+        // avtomatik prefill qiladi. Foydalanuvchi eski loginni yozib xato olmaydi.
+        const finalUsername = typeof d?.username === "string"
+          ? d.username
+          : usernameChanged ? newUsername.trim().toLowerCase() : currentUsername;
+        try {
+          if (usernameChanged) {
+            localStorage.setItem("admin.lastUsername", finalUsername);
+          }
+        } catch {
+          // localStorage o'chirilgan bo'lsa — jim
+        }
+        setMsg({
+          kind: "ok",
+          text: usernameChanged
+            ? `${parts.join(" va ")} yangilandi. Yangi login: ${finalUsername}. Qayta kirish kerak.`
+            : `${parts.join(" va ")} yangilandi — qayta kirishingiz kerak.`,
         });
-        setCurrent("");
-        setNewUsername("");
-        setNewPassword("");
-        setConfirmPassword("");
-        setChangePw(false);
+        // Server barcha seansiyalarni bekor qildi (joriy ham) va cookie'ni yo'q qildi.
+        // Foydalanuvchini login formasiga o'tkazamiz — u yangi credentials bilan kirsin.
+        const target = typeof d?.redirect === "string" ? d.redirect : "/admin";
+        // Login o'zgargan bo'lsa uzunroq kutamiz — foydalanuvchi yangi loginni o'qib olsin.
+        setTimeout(() => {
+          window.location.href = target;
+        }, usernameChanged ? 2500 : 1000);
       } else {
         setMsg({ kind: "err", text: d?.error?.message ?? uz.toasts.error });
       }

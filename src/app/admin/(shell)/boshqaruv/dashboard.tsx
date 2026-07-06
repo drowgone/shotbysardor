@@ -29,7 +29,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { uz } from "@/lib/i18n/uz";
-import { cn, formatNumber, formatTimeAgo } from "@/lib/utils";
+import { cn, formatNumber, formatTimeAgo, formatBytes } from "@/lib/utils";
 import { useLiveData } from "@/lib/live/use-live";
 
 type Stats = {
@@ -71,7 +71,7 @@ type Stats = {
     approvedOrders: number;
     priceUZS: number | null;
   }[];
-  mediaMix: { photo: number; video: number };
+  mediaMix: { photo: number; video: number; bytes: number | null };
   devices: { mobile: number; desktop: number };
   referrers: { host: string; count: number }[];
   recentOrders: {
@@ -756,7 +756,7 @@ function MediaMixCard({
   mix,
   total,
 }: {
-  mix: { photo: number; video: number };
+  mix: { photo: number; video: number; bytes: number | null };
   total: number;
 }) {
   const sum = Math.max(1, mix.photo + mix.video);
@@ -766,8 +766,16 @@ function MediaMixCard({
     <div className="bg-[var(--surface)] rounded-[var(--r-card)] p-4">
       <div className="flex items-center justify-between mb-3">
         <div className="meta">{uz.admin.analytics.mediaMix}</div>
-        <div className="meta text-[10px]">
-          {uz.admin.analytics.contentTotal}: {total}
+        <div className="meta text-[10px] flex items-center gap-2">
+          <span>
+            {uz.admin.analytics.contentTotal}: {total}
+          </span>
+          {mix.bytes != null && (
+            <>
+              <span className="text-[var(--text-muted)]">·</span>
+              <span title="Storage disk usage">{formatBytes(mix.bytes)}</span>
+            </>
+          )}
         </div>
       </div>
       <div className="flex h-2 rounded-full overflow-hidden bg-[var(--border)] mb-3">

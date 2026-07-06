@@ -1,7 +1,31 @@
 import { NextRequest } from "next/server";
+import { promises as fs } from "node:fs";
+import path from "node:path";
 import { apiError, ok, requireAdmin } from "@/lib/api";
 import { prisma } from "@/lib/db";
 import { storage } from "@/lib/storage";
+
+// Storage papkasi umumiy hajmini rekursiv hisoblash (faqat `local` drayvda).
+// R2 uchun `null` — chunki bucket usage ListObjectsV2 orqali qimmat.
+async function computeStorageUsage(): Promise<number | null> {
+  if (storage().driver !== "local") return null;
+  const root = path.join(process.cwd(), "storage");
+  let total = 0;
+  async function walk(dir: string) {
+    const entries = await fs.readdir(dir, { withFileTypes: true }).catch(() => []);
+    for (const e of entries) {
+      const p = path.join(dir, e.name);
+      if (e.isDirectory()) {
+        await walk(p);
+      } else if (e.isFile()) {
+        const st = await fs.stat(p).catch(() => null);
+        if (st) total += st.size;
+      }
+    }
+  }
+  await walk(root);
+  return total;
+}
 
 // Dashboard uchun ma'lumotlar to'plami — KPI, davr seriyasi, top kontent, media mix,
 // so'nggi harakatlar (buyurtma+izoh) va referrerlar. Barcha so'rovlar Promise.all bilan
@@ -217,6 +241,7 @@ export async function GET(req: NextRequest) {
 
   const photoCount = contentTypes.find((c) => c.type === "PHOTO")?._count._all ?? 0;
   const videoCount = contentTypes.find((c) => c.type === "VIDEO")?._count._all ?? 0;
+  const storageBytes = await computeStorageUsage();
 
   return ok({
     // Yuqoridagi KPI kartochkalari
@@ -260,8 +285,8 @@ export async function GET(req: NextRequest) {
       // Chindan olingan pul: har bir buyurtma yaratilgan payta priceUZS ni saqlaydi,
       // shu sabab foyda alohida agregat — bu yerda hozircha soddaga: orders × latest price.
     })),
-    // Media aralashmasi (foto vs video)
-    mediaMix: { photo: photoCount, video: videoCount },
+    // Media aralashmasi (foto vs video) — `bytes` faqat local storage'da to'ldiriladi.
+    mediaMix: { photo: photoCount, video: videoCount, bytes: storageBytes },
     // Qurilma taqsimoti
     devices: {
       mobile: devices.find((d) => d.device === "mobile")?._count._all ?? 0,
