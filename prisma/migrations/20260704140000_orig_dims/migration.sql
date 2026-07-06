@@ -1,0 +1,3 @@
+-- Asl fayl o'lchamlari (sifat rozetkasi uchun): 4K / FHD / HD ...
+ALTER TABLE "Content" ADD COLUMN "origWidth" INTEGER;
+ALTER TABLE "Content" ADD COLUMN "origHeight" INTEGER;

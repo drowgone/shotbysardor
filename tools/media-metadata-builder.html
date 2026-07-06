@@ -1,0 +1,1429 @@
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Media metadata tayyorlagich · shot by sardor</title>
+  <style>
+    :root {
+      --bg: #0E0E10;
+      --bg-elevated: #17171A;
+      --surface: #1F1F24;
+      --surface-hover: #2A2A30;
+      --border: #2E2E36;
+      --border-strong: #3D3D47;
+      --text: #F4F2ED;
+      --text-muted: #A6A29A;
+      --text-faint: #6C6963;
+      --accent: #C99A3F;
+      --accent-hover: #D5A94D;
+      --on-accent: #0E0E10;
+      --success: #66B37A;
+      --danger: #D26F5A;
+      --scrim: rgba(0,0,0,0.5);
+
+      --r-card: 14px;
+      --r-modal: 20px;
+      --r-control: 10px;
+      --r-pill: 999px;
+      --r-media: 8px;
+
+      --shadow-card: 0 1px 2px rgba(0,0,0,.2);
+      --shadow-modal: 0 32px 80px rgba(0,0,0,.5), 0 8px 24px rgba(0,0,0,.4);
+
+      --font-mono: "SF Mono", Menlo, Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); }
+    body {
+      font-family: "Satoshi", -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      font-size: 14px;
+      line-height: 1.55;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+    button, input, textarea, select { font-family: inherit; font-size: inherit; color: inherit; }
+    ::selection { background: color-mix(in oklab, var(--accent) 40%, transparent); }
+
+    /* ------------------------------------------------------------ */
+    /* Layout                                                        */
+    /* ------------------------------------------------------------ */
+    .container {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 24px 20px 96px;
+    }
+
+    /* Sidebar-like header */
+    header.hero {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      gap: 24px; flex-wrap: wrap;
+      margin-bottom: 24px;
+      padding-bottom: 20px; border-bottom: 1px solid var(--border);
+    }
+    header.hero .brand {
+      display: flex; align-items: center; gap: 12px;
+    }
+    header.hero .monogram {
+      width: 40px; height: 40px; border-radius: 10px;
+      background: var(--surface); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--accent); font-family: "Clash Display", serif; font-size: 20px;
+      letter-spacing: -0.02em; font-weight: 600;
+    }
+    header.hero h1 { margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.15; }
+    header.hero .meta { color: var(--text-muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 2px; }
+    header.hero .stats {
+      display: flex; gap: 16px; align-items: center;
+      background: var(--surface);
+      padding: 10px 14px; border-radius: var(--r-control);
+      font-size: 11px; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    header.hero .stats b { color: var(--text); font-weight: 600; font-size: 13px; text-transform: none; letter-spacing: 0; font-family: var(--font-mono); }
+    header.hero .stats .sep { width: 1px; height: 16px; background: var(--border); }
+
+    /* Two-column workspace */
+    .workspace {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 24px;
+    }
+    @media (max-width: 960px) { .workspace { grid-template-columns: 1fr; } }
+
+    /* ------------------------------------------------------------ */
+    /* Info card (instructions)                                      */
+    /* ------------------------------------------------------------ */
+    .info-card {
+      background: color-mix(in oklab, var(--accent) 8%, transparent);
+      border: 1px solid color-mix(in oklab, var(--accent) 30%, transparent);
+      border-radius: var(--r-card);
+      padding: 14px 18px;
+      display: flex; gap: 14px; align-items: flex-start;
+      margin-bottom: 20px;
+      color: var(--text-muted);
+      font-size: 12px;
+      line-height: 1.65;
+    }
+    .info-card .icon-badge {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--accent); color: var(--on-accent);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; font-weight: 700;
+    }
+    .info-card ol { margin: 4px 0 0 0; padding-left: 20px; color: var(--text-muted); }
+    .info-card ol li + li { margin-top: 3px; }
+    .info-card code {
+      background: var(--bg); padding: 1px 6px; border-radius: 4px;
+      font-family: var(--font-mono); font-size: 11px; color: var(--accent);
+    }
+
+    /* ------------------------------------------------------------ */
+    /* Drop zone                                                     */
+    /* ------------------------------------------------------------ */
+    .drop-zone {
+      border: 2px dashed var(--border-strong);
+      border-radius: var(--r-card);
+      padding: 40px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+      background: transparent;
+    }
+    .drop-zone:hover { border-color: var(--accent); }
+    .drop-zone.drag {
+      border-color: var(--accent);
+      background: color-mix(in oklab, var(--accent) 5%, transparent);
+    }
+    .drop-zone .icon-lg {
+      width: 32px; height: 32px; margin: 0 auto 8px;
+      color: var(--text-muted);
+      stroke-width: 1.5;
+    }
+    .drop-zone.drag .icon-lg { color: var(--accent); }
+    .drop-zone .title { color: var(--text-muted); font-size: 14px; }
+    .drop-zone .subtitle { font-size: 11px; color: var(--text-faint); margin-top: 4px; }
+    .drop-zone input[type=file] { display: none; }
+
+    /* ------------------------------------------------------------ */
+    /* Progress bar                                                  */
+    /* ------------------------------------------------------------ */
+    .progress-row {
+      display: flex; align-items: center; gap: 12px;
+      margin-top: 16px; font-size: 11px; color: var(--text-muted);
+    }
+    .progress-bar {
+      flex: 1; height: 4px; background: var(--surface);
+      border-radius: 999px; overflow: hidden;
+    }
+    .progress-bar .fill {
+      height: 100%; background: var(--accent);
+      transition: width .3s;
+      border-radius: inherit;
+    }
+    .progress-row .tab { font-family: var(--font-mono); color: var(--text); }
+
+    /* ------------------------------------------------------------ */
+    /* File items (left column)                                      */
+    /* ------------------------------------------------------------ */
+    .items { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+    .item {
+      background: var(--surface);
+      border-radius: var(--r-card);
+      overflow: hidden;
+      transition: box-shadow .15s, background .15s;
+    }
+    .item.has-override {
+      box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent) 40%, transparent);
+    }
+    .item.expanded { background: var(--surface-hover); }
+    .item-head { display: flex; align-items: center; gap: 12px; padding: 10px 12px; }
+
+    .thumb {
+      width: 44px; height: 44px; border-radius: var(--r-media);
+      background: var(--bg-elevated); overflow: hidden;
+      flex-shrink: 0; position: relative;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-faint); font-size: 10px; font-family: var(--font-mono);
+    }
+    .thumb img, .thumb video {
+      width: 100%; height: 100%; object-fit: cover;
+    }
+    .thumb .badge-type {
+      position: absolute; bottom: 2px; right: 2px;
+      background: rgba(0,0,0,.7); color: white; padding: 1px 4px;
+      font-size: 8px; border-radius: 3px; letter-spacing: 0.08em;
+    }
+
+    .item-index {
+      color: var(--text-faint); font-size: 10px; font-family: var(--font-mono);
+      min-width: 20px; text-align: right;
+    }
+
+    .item .info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+    .item .title-input {
+      background: transparent; border: none; padding: 0;
+      font-weight: 500; font-size: 13.5px; color: var(--text);
+      outline: none; width: 100%;
+    }
+    .item .title-input:focus { color: var(--accent); }
+    .item .fname {
+      font-size: 10.5px; color: var(--text-faint);
+      font-family: var(--font-mono);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .item .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 2px; }
+    .chip {
+      display: inline-flex; align-items: center; gap: 3px;
+      font-size: 10px; padding: 1px 6px; border-radius: 4px;
+      background: var(--bg); color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+    .chip.override {
+      background: color-mix(in oklab, var(--accent) 15%, transparent);
+      color: var(--accent);
+      font-family: "Satoshi", sans-serif;
+      text-transform: uppercase; letter-spacing: 0.06em; font-size: 9px;
+    }
+    .chip.override::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+
+    .item-actions { display: flex; gap: 4px; align-items: center; }
+    .icon-btn {
+      background: transparent; border: 1px solid var(--border);
+      color: var(--text-muted); width: 32px; height: 32px;
+      border-radius: var(--r-control); cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center;
+      transition: color .15s, border-color .15s;
+    }
+    .icon-btn:hover { color: var(--text); border-color: var(--border-strong); }
+    .icon-btn.danger:hover { color: var(--danger); border-color: color-mix(in oklab, var(--danger) 50%, transparent); }
+
+    /* Override panel */
+    .overrides {
+      padding: 14px 14px 16px 14px;
+      background: var(--bg-elevated);
+      border-top: 1px solid var(--border);
+      display: none;
+    }
+    .item.expanded .overrides { display: block; }
+    .overrides .row {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 10px; margin-bottom: 10px;
+    }
+    .overrides .row.wide { grid-template-columns: 1fr; }
+    .overrides .row:last-child { margin-bottom: 0; }
+    .overrides .actions-line {
+      display: flex; gap: 8px; align-items: center;
+      margin-top: 10px; padding-top: 10px;
+      border-top: 1px solid var(--border);
+    }
+    .overrides .actions-line .note {
+      font-size: 10px; color: var(--text-faint); flex: 1;
+    }
+
+    /* ------------------------------------------------------------ */
+    /* Right panel (shared metadata)                                 */
+    /* ------------------------------------------------------------ */
+    .panel {
+      background: var(--surface);
+      border-radius: var(--r-card);
+      padding: 20px;
+      display: flex; flex-direction: column; gap: 18px;
+    }
+    .panel h2 {
+      margin: 0; font-size: 15px; font-weight: 600;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .panel h2 .caption {
+      font-size: 10px; color: var(--text-faint);
+      text-transform: uppercase; letter-spacing: 0.08em; font-weight: 500;
+    }
+
+    .field-block { display: flex; flex-direction: column; gap: 6px; }
+    .field-block > label {
+      font-size: 10px; text-transform: uppercase;
+      letter-spacing: 0.08em; color: var(--text-muted); font-weight: 500;
+    }
+    .field-block > label .req { color: var(--accent); margin-left: 2px; }
+    .field-block .hint { font-size: 10.5px; color: var(--text-faint); }
+
+    input[type=text], input[type=date], input[type=number], input[type=search],
+    textarea, select {
+      background: var(--bg);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--r-control);
+      padding: 0 12px;
+      height: 40px;
+      outline: none;
+      transition: border-color .15s;
+      width: 100%;
+      color: var(--text);
+    }
+    input:focus, textarea:focus, select:focus { border-color: var(--accent); }
+    input::placeholder, textarea::placeholder { color: var(--text-faint); }
+    textarea { padding: 10px 12px; height: auto; min-height: 60px; resize: vertical; }
+    select {
+      background-image: linear-gradient(45deg, transparent 50%, var(--text-muted) 50%),
+                        linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
+      background-position: calc(100% - 14px) 18px, calc(100% - 10px) 18px;
+      background-size: 4px 4px;
+      background-repeat: no-repeat;
+      appearance: none;
+      padding-right: 32px;
+    }
+
+    /* Pill chips (for genres) */
+    .pill-row { display: flex; flex-wrap: wrap; gap: 6px; }
+    .pill {
+      height: 32px; padding: 0 14px;
+      display: inline-flex; align-items: center; gap: 4px;
+      background: transparent;
+      border: 1px solid var(--border-strong);
+      color: var(--text-muted);
+      border-radius: var(--r-pill);
+      font-size: 12.5px;
+      cursor: pointer;
+      transition: color .15s, border-color .15s, background .15s;
+    }
+    .pill:hover { border-color: var(--accent); }
+    .pill.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: color-mix(in oklab, var(--accent) 10%, transparent);
+    }
+    .pill button.remove {
+      background: none; border: none; color: inherit;
+      padding: 0 0 0 2px; margin-right: -4px;
+      cursor: pointer; font-size: 14px; line-height: 1;
+    }
+    .pill button.remove:hover { color: var(--danger); }
+
+    .pill.dashed {
+      border-style: dashed;
+    }
+    .pill.dashed:hover { color: var(--accent); }
+
+    /* Genre inline add */
+    .genre-add-row {
+      display: flex; gap: 8px; margin-top: 8px;
+    }
+    .genre-add-row input { flex: 1; height: 36px; }
+
+    /* Toggle */
+    .toggle-row {
+      display: inline-flex; align-items: center; gap: 10px;
+      cursor: pointer; user-select: none;
+      height: 40px;
+    }
+    .switch {
+      appearance: none;
+      width: 34px; height: 20px;
+      background: var(--border-strong); border-radius: 999px;
+      position: relative; cursor: pointer; transition: background .2s;
+    }
+    .switch::after {
+      content: ''; position: absolute; width: 16px; height: 16px;
+      background: white; border-radius: 50%;
+      top: 2px; left: 2px; transition: left .2s;
+    }
+    .switch:checked { background: var(--accent); }
+    .switch:checked::after { left: 16px; }
+    .toggle-row span.label { font-size: 13px; }
+
+    /* Segmented (status) */
+    .segmented {
+      display: inline-flex; gap: 4px;
+      background: var(--bg); padding: 4px;
+      border-radius: var(--r-control);
+    }
+    .segmented button {
+      flex: 1;
+      background: transparent; border: none;
+      color: var(--text-muted); cursor: pointer;
+      padding: 6px 14px; border-radius: 8px;
+      font-size: 12.5px; font-weight: 500;
+      transition: background .15s, color .15s;
+    }
+    .segmented button.active { background: var(--surface); color: var(--text); }
+
+    /* Buttons */
+    .btn {
+      background: var(--accent); color: var(--on-accent);
+      border: none; border-radius: var(--r-control);
+      padding: 0 20px; cursor: pointer; font-weight: 600; font-size: 14px;
+      height: 44px;
+      display: inline-flex; align-items: center; gap: 8px;
+      transition: background .15s;
+    }
+    .btn:hover:not(:disabled) { background: var(--accent-hover); }
+    .btn:disabled { opacity: .45; cursor: not-allowed; }
+    .btn.secondary { background: transparent; border: 1px solid var(--border-strong); color: var(--text); }
+    .btn.secondary:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+    .btn.ghost { background: transparent; color: var(--text-muted); border: none; }
+    .btn.ghost:hover { color: var(--danger); }
+    .btn.small { height: 32px; padding: 0 12px; font-size: 12px; }
+
+    /* Sticky bottom bar */
+    .action-bar {
+      position: sticky; bottom: 0; left: 0; right: 0;
+      background: color-mix(in oklab, var(--bg-elevated) 92%, transparent);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-top: 1px solid var(--border);
+      margin-top: 24px; padding: 14px 20px;
+      display: flex; gap: 12px; flex-wrap: wrap;
+      align-items: center; justify-content: space-between;
+      z-index: 20;
+    }
+    .action-bar .left, .action-bar .right { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .action-bar .status {
+      font-size: 11.5px; color: var(--text-muted);
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .action-bar .status .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); }
+
+    /* Toast */
+    .toast {
+      position: fixed; top: 24px; right: 24px; z-index: 200;
+      background: var(--surface); border: 1px solid var(--border-strong);
+      border-radius: var(--r-control); padding: 12px 16px;
+      font-size: 13px;
+      box-shadow: var(--shadow-modal);
+      transform: translateY(-10px); opacity: 0;
+      transition: transform .25s, opacity .25s;
+      pointer-events: none;
+      max-width: 360px;
+      display: flex; gap: 10px; align-items: center;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast .icon { width: 16px; height: 16px; flex-shrink: 0; }
+    .toast.ok { border-color: color-mix(in oklab, var(--success) 40%, transparent); }
+    .toast.ok .icon { color: var(--success); }
+    .toast.err { border-color: color-mix(in oklab, var(--danger) 40%, transparent); }
+    .toast.err .icon { color: var(--danger); }
+
+    /* Empty state */
+    .empty {
+      text-align: center; padding: 48px 20px;
+      color: var(--text-muted);
+      background: var(--surface);
+      border-radius: var(--r-card);
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+    }
+    .empty .icon-lg { width: 32px; height: 32px; color: var(--text-faint); stroke-width: 1.5; margin-bottom: 4px; }
+    .empty .title { font-size: 14px; }
+    .empty .subtitle { font-size: 11.5px; color: var(--text-faint); }
+
+    /* Bulk actions bar */
+    .list-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 4px; margin-bottom: 4px;
+    }
+    .list-header .heading {
+      font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--text-muted); font-weight: 500;
+      display: inline-flex; align-items: center; gap: 8px;
+    }
+    .list-header .heading .count {
+      font-family: var(--font-mono); color: var(--text); font-size: 11px;
+      background: var(--surface); padding: 1px 6px; border-radius: 4px;
+      text-transform: none; letter-spacing: 0;
+    }
+
+    /* Icons — inline SVG helper */
+    .icon { width: 16px; height: 16px; stroke-width: 1.75; }
+
+    /* Utilities */
+    .hidden { display: none !important; }
+    .row-flex { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    hr.sep { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- =========================================================== -->
+    <!-- HERO                                                         -->
+    <!-- =========================================================== -->
+    <header class="hero">
+      <div class="brand">
+        <div class="monogram">S</div>
+        <div>
+          <h1>Media metadata tayyorlagich</h1>
+          <div class="meta">Offline · Jsonni serverga hech nima yubormaydi</div>
+        </div>
+      </div>
+      <div class="stats">
+        <span><b id="stat-count">0</b> ta fayl</span>
+        <span class="sep"></span>
+        <span><b id="stat-photos">0</b> foto</span>
+        <span class="sep"></span>
+        <span><b id="stat-videos">0</b> video</span>
+        <span class="sep"></span>
+        <span><b id="stat-size">0 B</b></span>
+      </div>
+    </header>
+
+    <!-- Info panel -->
+    <div class="info-card">
+      <div class="icon-badge">i</div>
+      <div>
+        <div style="color: var(--text); font-weight: 500; margin-bottom: 4px;">Ish tartibi</div>
+        <ol>
+          <li>Media fayllarni tashlab, sarlavha va boshqa metadatani to'ldiring.</li>
+          <li><b>Umumiy sozlamalar</b> barcha fayllarga qo'llanadi. Alohida farq bo'lsa <b>"O'zgartirish"</b>ni bosing.</li>
+          <li><b>JSON eksport</b> tugmasini bosib <code>metadata.json</code>ni yuklab oling.</li>
+          <li>Media fayllarni loyihaning <code>storage/import/</code> papkasiga joylashtiring.</li>
+          <li><code>/admin/yuklash</code> sahifasidagi <b>"JSON import"</b> qismidan yuklab bir zumda barcha kontent yarating.</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- =========================================================== -->
+    <!-- WORKSPACE                                                    -->
+    <!-- =========================================================== -->
+    <div class="workspace">
+
+      <!-- Chap ustun: fayllar -->
+      <div>
+        <label class="drop-zone" id="drop">
+          <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          <div class="title">Fayllarni tashlang yoki bosib tanlang</div>
+          <div class="subtitle">Foto: JPG, PNG, WEBP, HEIC · Video: MP4, WEBM · bir necha o'nlab fayl mumkin</div>
+          <input type="file" id="file-input" multiple accept="image/*,video/*" />
+        </label>
+
+        <div class="progress-row hidden" id="progress-row">
+          <div class="progress-bar"><div class="fill" id="progress-fill" style="width: 0%"></div></div>
+          <div class="tab" id="progress-tab">0/0 · 0%</div>
+        </div>
+
+        <div class="list-header" style="margin-top: 20px;">
+          <div class="heading">
+            Fayllar ro'yxati
+            <span class="count" id="items-count">0</span>
+          </div>
+          <button class="btn ghost small" id="clear-all">Barchasini tozalash</button>
+        </div>
+
+        <div id="items" class="items"></div>
+        <div class="empty" id="empty-state">
+          <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <circle cx="9" cy="9" r="2"/>
+            <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+          </svg>
+          <div class="title">Hozircha fayl yo'q</div>
+          <div class="subtitle">Yuqoridagi zonaga tashlang yoki fayl tanlang</div>
+        </div>
+      </div>
+
+      <!-- O'ng ustun: umumiy metadata -->
+      <div class="panel">
+        <h2>
+          Umumiy metadata
+          <span class="caption">·  Belgilanmagan fayllarga qo'llanadi</span>
+        </h2>
+
+        <div class="field-block">
+          <label>Janr(lar)<span class="req">*</span></label>
+          <div class="pill-row" id="shared-genres-pills"></div>
+          <div class="genre-add-row">
+            <input type="text" id="shared-genres-input" placeholder="Yangi janr yozing va Enter…" autocomplete="off" />
+          </div>
+          <div class="hint">Import vaqti bazada bo'lmagan janrlar avtomatik yaratiladi.</div>
+        </div>
+
+        <hr class="sep" />
+
+        <div class="field-block">
+          <label>Joylashuv<span class="req">*</span></label>
+          <input type="text" id="shared-location" placeholder="Toshkent" autocomplete="off" />
+        </div>
+
+        <div class="grid-2">
+          <div class="field-block">
+            <label>Kunning umumiy sanasi</label>
+            <input type="date" id="shared-date" />
+          </div>
+          <div class="field-block">
+            <label>Narx (UZS)</label>
+            <input type="number" id="shared-price" min="0" placeholder="0" />
+          </div>
+        </div>
+
+        <hr class="sep" />
+
+        <div class="field-block">
+          <label>Holat</label>
+          <div class="segmented" id="shared-status-seg">
+            <button data-value="PUBLISHED" class="active">Chop etilgan</button>
+            <button data-value="DRAFT">Qoralama</button>
+          </div>
+        </div>
+
+        <div class="field-block">
+          <label>Featured</label>
+          <label class="toggle-row">
+            <input type="checkbox" class="switch" id="shared-featured" />
+            <span class="label" id="shared-featured-label" style="color: var(--text-muted);">Yo'q</span>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================== -->
+  <!-- STICKY ACTIONS                                                -->
+  <!-- =========================================================== -->
+  <div class="action-bar">
+    <div class="left">
+      <button class="btn" id="export-json">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        JSON eksport
+      </button>
+      <button class="btn secondary" id="load-json-btn">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        Mavjud JSON'ni yuklash
+      </button>
+      <input type="file" id="load-json" accept="application/json,.json" hidden />
+    </div>
+    <div class="right">
+      <div class="status">
+        <span class="dot" id="draft-dot"></span>
+        Qoralama <b id="draft-status" style="color: var(--text); margin-left: 3px;">avtomatik</b>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M20 6 9 17l-5-5"/>
+    </svg>
+    <span class="msg">Bajarildi</span>
+  </div>
+
+  <script>
+  (function () {
+    'use strict';
+
+    // ============================================================
+    // Sozlamalar
+    // ============================================================
+    const SCHEMA_VERSION = 1;
+    const SCHEMA_ID = 'shotbysardor-media-metadata/v1';
+    const STORAGE_KEY = 'sbs-metadata-builder-draft-v1';
+
+    // Suggested genres — foydalanuvchi tez tanlashi uchun tayyor variantlar
+    // (loyihada shu janrlar oldindan mavjud emas, ammo import vaqti yaratiladi).
+    const SUGGESTED_GENRES = [
+      "Portret", "Ko'cha", "Peyzaj", "Toy", "Sport",
+      "Konsert", "Editorial", "Fashion", "Reklama", "Uy",
+    ];
+
+    const state = {
+      items: [],
+      shared: {
+        genreNames: [],
+        locationName: '',
+        capturedAt: todayIso(),
+        priceUZS: '',
+        featured: false,
+        status: 'PUBLISHED',
+      },
+    };
+    const savedByFilename = new Map();
+
+    // ============================================================
+    // Yordamchilar
+    // ============================================================
+    function todayIso() {
+      return new Date().toISOString().slice(0, 10);
+    }
+    function fmtSize(n) {
+      if (n < 1024) return n + ' B';
+      if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
+      if (n < 1024 * 1024 * 1024) return (n / (1024 * 1024)).toFixed(1) + ' MB';
+      return (n / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+    }
+    function guessType(file) {
+      const mime = (file.type || '').toLowerCase();
+      if (mime.startsWith('image/')) return 'PHOTO';
+      if (mime.startsWith('video/')) return 'VIDEO';
+      const ext = (file.name.split('.').pop() || '').toLowerCase();
+      if (['jpg','jpeg','png','webp','heic','heif'].includes(ext)) return 'PHOTO';
+      if (['mp4','mov','webm','mkv'].includes(ext)) return 'VIDEO';
+      return null;
+    }
+    function slugify(s) {
+      return (s || '')
+        .toLowerCase()
+        .replace(/[àáâãäå]/g,'a').replace(/[èéêë]/g,'e').replace(/[ìíîï]/g,'i')
+        .replace(/[òóôõö]/g,'o').replace(/[ùúûü]/g,'u').replace(/[ñ]/g,'n')
+        .replace(/[^a-z0-9-\s]/g,'').trim().replace(/\s+/g,'-').slice(0, 80);
+    }
+    function guessTitle(filename) {
+      return filename
+        .replace(/\.[^.]+$/, '')
+        .replace(/^(IMG|DSC|PXL|MOV|VID|DJI)[_-]?/i, '')
+        .replace(/[_\-]+/g, ' ')
+        .replace(/\s+/g, ' ').trim();
+    }
+    function uid() {
+      return (crypto && crypto.randomUUID) ? crypto.randomUUID() : ('id-' + Math.random().toString(36).slice(2));
+    }
+    function extractImageDims(file) {
+      return new Promise((resolve) => {
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => resolve({ w: img.naturalWidth || 0, h: img.naturalHeight || 0, previewUrl: url });
+        img.onerror = () => resolve({ w: 0, h: 0, previewUrl: url });
+        img.src = url;
+      });
+    }
+    function extractVideoMeta(file) {
+      return new Promise((resolve) => {
+        const url = URL.createObjectURL(file);
+        const v = document.createElement('video');
+        v.preload = 'metadata';
+        v.onloadedmetadata = () => resolve({
+          w: v.videoWidth || 0, h: v.videoHeight || 0,
+          durationSec: Math.max(0, Math.round(v.duration || 0)),
+          previewUrl: url,
+        });
+        v.onerror = () => resolve({ w: 0, h: 0, durationSec: 0, previewUrl: url });
+        v.src = url;
+      });
+    }
+
+    // ============================================================
+    // Toast
+    // ============================================================
+    const toastEl = document.getElementById('toast');
+    let toastTimer = null;
+    function toast(msg, kind) {
+      toastEl.querySelector('.msg').textContent = msg;
+      toastEl.className = 'toast show ' + (kind || 'ok');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => { toastEl.classList.remove('show'); }, 2400);
+    }
+
+    // ============================================================
+    // Draft (localStorage)
+    // ============================================================
+    function saveDraft() {
+      try {
+        const payload = {
+          shared: state.shared,
+          items: state.items.map((it) => ({
+            filename: it.filename,
+            title: it.title,
+            description: it.description || null,
+            overrides: it.overrides,
+          })),
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+        setDraftStatus('saqlangan');
+      } catch (_) { setDraftStatus('saqlab bo\'lmadi'); }
+    }
+    function loadDraft() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const p = JSON.parse(raw);
+        if (p && p.shared) Object.assign(state.shared, p.shared);
+        if (p && Array.isArray(p.items)) {
+          for (const it of p.items) if (it && it.filename) savedByFilename.set(it.filename, it);
+        }
+      } catch (_) {}
+    }
+    function setDraftStatus(text) {
+      const el = document.getElementById('draft-status');
+      if (el) el.textContent = text;
+    }
+    let saveDebounce = null;
+    function scheduleSave() {
+      setDraftStatus('saqlanmoqda…');
+      clearTimeout(saveDebounce);
+      saveDebounce = setTimeout(saveDraft, 300);
+    }
+
+    // ============================================================
+    // Fayl qo'shish
+    // ============================================================
+    async function addFiles(fileList) {
+      const files = Array.from(fileList || []);
+      if (files.length === 0) return;
+      for (const file of files) {
+        const type = guessType(file);
+        if (!type) {
+          toast('Qo\'llab-quvvatlanmaydigan fayl: ' + file.name, 'err');
+          continue;
+        }
+        if (state.items.some((x) => x.filename === file.name && x.source.size === file.size)) continue;
+        const item = {
+          id: uid(),
+          filename: file.name,
+          type,
+          source: {
+            size: file.size,
+            mime: file.type || '',
+            width: 0, height: 0, durationSec: null,
+            lastModified: file.lastModified || null,
+          },
+          previewUrl: null,
+          title: guessTitle(file.name),
+          description: null,
+          overrides: {},
+        };
+        const saved = savedByFilename.get(file.name);
+        if (saved) {
+          if (saved.title) item.title = saved.title;
+          if (saved.description) item.description = saved.description;
+          if (saved.overrides) item.overrides = saved.overrides;
+        }
+        if (type === 'PHOTO') {
+          const { w, h, previewUrl } = await extractImageDims(file);
+          item.source.width = w; item.source.height = h; item.previewUrl = previewUrl;
+        } else {
+          const { w, h, durationSec, previewUrl } = await extractVideoMeta(file);
+          item.source.width = w; item.source.height = h; item.source.durationSec = durationSec;
+          item.previewUrl = previewUrl;
+        }
+        state.items.push(item);
+      }
+      renderItems();
+      renderStats();
+      scheduleSave();
+    }
+
+    // ============================================================
+    // Umumiy sozlamalar (o'ng panel)
+    // ============================================================
+    function renderSharedGenres() {
+      const box = document.getElementById('shared-genres-pills');
+      box.innerHTML = '';
+
+      // Tanlangan janrlar (pill.active, X bilan)
+      for (const g of state.shared.genreNames) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'pill active';
+        b.innerHTML = '<span></span><button type="button" class="remove" aria-label="olib tashlash">&times;</button>';
+        b.firstChild.textContent = g;
+        b.querySelector('.remove').addEventListener('click', (e) => {
+          e.stopPropagation();
+          state.shared.genreNames = state.shared.genreNames.filter((x) => x !== g);
+          renderSharedGenres();
+          scheduleSave();
+        });
+        box.appendChild(b);
+      }
+
+      // Taklif etilgan janrlar (tanlanmagan bo'lsa)
+      for (const g of SUGGESTED_GENRES) {
+        if (state.shared.genreNames.includes(g)) continue;
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'pill dashed';
+        b.textContent = '+ ' + g;
+        b.addEventListener('click', () => {
+          if (!state.shared.genreNames.includes(g)) state.shared.genreNames.push(g);
+          renderSharedGenres();
+          scheduleSave();
+        });
+        box.appendChild(b);
+      }
+    }
+
+    function initSharedFields() {
+      const input = document.getElementById('shared-genres-input');
+      const commit = () => {
+        const parts = input.value.split(',').map((s) => s.trim()).filter(Boolean);
+        for (const p of parts) if (!state.shared.genreNames.includes(p)) state.shared.genreNames.push(p);
+        input.value = '';
+        renderSharedGenres();
+        scheduleSave();
+      };
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); commit(); }
+        if (e.key === 'Backspace' && !input.value && state.shared.genreNames.length > 0) {
+          state.shared.genreNames.pop();
+          renderSharedGenres();
+          scheduleSave();
+        }
+      });
+      input.addEventListener('blur', commit);
+
+      const bindText = (id, key) => {
+        const el = document.getElementById(id);
+        el.value = state.shared[key];
+        el.addEventListener('input', () => { state.shared[key] = el.value; scheduleSave(); });
+      };
+      bindText('shared-location', 'locationName');
+      bindText('shared-date', 'capturedAt');
+      bindText('shared-price', 'priceUZS');
+
+      const seg = document.getElementById('shared-status-seg');
+      seg.querySelectorAll('button').forEach((btn) => {
+        if (btn.dataset.value === state.shared.status) btn.classList.add('active');
+        else btn.classList.remove('active');
+        btn.addEventListener('click', () => {
+          state.shared.status = btn.dataset.value;
+          seg.querySelectorAll('button').forEach((b) => b.classList.toggle('active', b === btn));
+          scheduleSave();
+        });
+      });
+
+      const feat = document.getElementById('shared-featured');
+      const featLbl = document.getElementById('shared-featured-label');
+      feat.checked = !!state.shared.featured;
+      featLbl.textContent = feat.checked ? 'Ha' : 'Yo\'q';
+      featLbl.style.color = feat.checked ? 'var(--accent)' : 'var(--text-muted)';
+      feat.addEventListener('change', () => {
+        state.shared.featured = feat.checked;
+        featLbl.textContent = feat.checked ? 'Ha' : 'Yo\'q';
+        featLbl.style.color = feat.checked ? 'var(--accent)' : 'var(--text-muted)';
+        scheduleSave();
+      });
+
+      renderSharedGenres();
+    }
+
+    // ============================================================
+    // Ro'yxat (chap ustun)
+    // ============================================================
+    function renderStats() {
+      const p = state.items.filter((i) => i.type === 'PHOTO').length;
+      const v = state.items.filter((i) => i.type === 'VIDEO').length;
+      const s = state.items.reduce((a, i) => a + (i.source.size || 0), 0);
+      document.getElementById('stat-count').textContent = String(state.items.length);
+      document.getElementById('stat-photos').textContent = String(p);
+      document.getElementById('stat-videos').textContent = String(v);
+      document.getElementById('stat-size').textContent = fmtSize(s);
+      document.getElementById('items-count').textContent = String(state.items.length);
+    }
+
+    function countOverrides(it) {
+      const ov = it.overrides || {};
+      return Object.keys(ov).filter((k) => {
+        const v = ov[k];
+        if (Array.isArray(v)) return v.length > 0;
+        return v !== null && v !== undefined && v !== '';
+      }).length + (it.description ? 1 : 0);
+    }
+
+    function renderItems() {
+      const container = document.getElementById('items');
+      const empty = document.getElementById('empty-state');
+      empty.style.display = state.items.length === 0 ? '' : 'none';
+      container.innerHTML = '';
+
+      state.items.forEach((it, idx) => {
+        const overrideCount = countOverrides(it);
+        const el = document.createElement('div');
+        el.className = 'item' + (it._expanded ? ' expanded' : '') + (overrideCount > 0 ? ' has-override' : '');
+        el.dataset.id = it.id;
+
+        // -- head --
+        const head = document.createElement('div');
+        head.className = 'item-head';
+
+        const idxEl = document.createElement('div');
+        idxEl.className = 'item-index';
+        idxEl.textContent = String(idx + 1).padStart(2, '0');
+        head.appendChild(idxEl);
+
+        const thumb = document.createElement('div');
+        thumb.className = 'thumb';
+        if (it.previewUrl && it.type === 'PHOTO') {
+          thumb.innerHTML = '<img src="' + it.previewUrl + '" alt="">';
+        } else if (it.previewUrl && it.type === 'VIDEO') {
+          thumb.innerHTML = '<video src="' + it.previewUrl + '" muted preload="metadata"></video>';
+        } else {
+          thumb.textContent = it.type;
+        }
+        const typeBadge = document.createElement('span');
+        typeBadge.className = 'badge-type';
+        typeBadge.textContent = it.type === 'PHOTO' ? 'IMG' : 'VID';
+        thumb.appendChild(typeBadge);
+        head.appendChild(thumb);
+
+        const info = document.createElement('div');
+        info.className = 'info';
+        const titleInput = document.createElement('input');
+        titleInput.type = 'text';
+        titleInput.className = 'title-input';
+        titleInput.value = it.title;
+        titleInput.placeholder = 'Sarlavha…';
+        titleInput.addEventListener('input', () => { it.title = titleInput.value; scheduleSave(); });
+        info.appendChild(titleInput);
+
+        const fname = document.createElement('div');
+        fname.className = 'fname';
+        fname.textContent = it.filename;
+        info.appendChild(fname);
+
+        const chips = document.createElement('div');
+        chips.className = 'chips';
+        const chipList = [];
+        if (it.source.width && it.source.height) chipList.push(it.source.width + '×' + it.source.height);
+        chipList.push(fmtSize(it.source.size));
+        if (it.source.durationSec) chipList.push(it.source.durationSec + 's');
+        for (const c of chipList) {
+          const s = document.createElement('span');
+          s.className = 'chip';
+          s.textContent = c;
+          chips.appendChild(s);
+        }
+        if (overrideCount > 0) {
+          const s = document.createElement('span');
+          s.className = 'chip override';
+          s.textContent = overrideCount + ' o\'zgartirish';
+          chips.appendChild(s);
+        }
+        info.appendChild(chips);
+        head.appendChild(info);
+
+        // Actions
+        const actions = document.createElement('div');
+        actions.className = 'item-actions';
+
+        const expandBtn = document.createElement('button');
+        expandBtn.className = 'icon-btn';
+        expandBtn.title = it._expanded ? 'Yopish' : 'O\'zgartirish';
+        expandBtn.innerHTML = it._expanded
+          ? '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m18 15-6-6-6 6"/></svg>'
+          : '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m6 9 6 6 6-6"/></svg>';
+        expandBtn.addEventListener('click', () => { it._expanded = !it._expanded; renderItems(); });
+        actions.appendChild(expandBtn);
+
+        const delBtn = document.createElement('button');
+        delBtn.className = 'icon-btn danger';
+        delBtn.title = 'O\'chirish';
+        delBtn.innerHTML = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="m19 6-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>';
+        delBtn.addEventListener('click', () => {
+          if (it.previewUrl) URL.revokeObjectURL(it.previewUrl);
+          state.items = state.items.filter((x) => x.id !== it.id);
+          renderItems(); renderStats(); scheduleSave();
+        });
+        actions.appendChild(delBtn);
+        head.appendChild(actions);
+        el.appendChild(head);
+
+        // -- overrides --
+        if (it._expanded) {
+          const ov = document.createElement('div');
+          ov.className = 'overrides';
+
+          const genresRow = document.createElement('div');
+          genresRow.className = 'row wide';
+          genresRow.innerHTML = ''
+            + '<div class="field-block">'
+            +   '<label>Qo\'shimcha janr(lar) <span class="hint" style="text-transform: none; letter-spacing: 0;">·  umumiy janrlar + bularni birlashtiradi</span></label>'
+            +   '<div class="pill-row" data-item-genres></div>'
+            +   '<div class="genre-add-row"><input type="text" placeholder="Yangi janr…" autocomplete="off" data-tags-input></div>'
+            + '</div>';
+          ov.appendChild(genresRow);
+
+          const row1 = document.createElement('div');
+          row1.className = 'row';
+          row1.innerHTML = ''
+            + '<div class="field-block"><label>Alohida joylashuv</label><input type="text" placeholder="(umumiy)" data-field="locationName" value="' + (it.overrides.locationName || '').replace(/"/g, '&quot;') + '"></div>'
+            + '<div class="field-block"><label>Alohida sana</label><input type="date" data-field="capturedAt" value="' + (it.overrides.capturedAt || '') + '"></div>'
+            + '<div class="field-block"><label>Alohida narx (UZS)</label><input type="number" min="0" placeholder="(umumiy)" data-field="priceUZS" value="' + (it.overrides.priceUZS != null ? it.overrides.priceUZS : '') + '"></div>';
+          ov.appendChild(row1);
+
+          const row2 = document.createElement('div');
+          row2.className = 'row';
+          row2.innerHTML = ''
+            + '<div class="field-block"><label>Alohida holat</label>'
+            +   '<div class="segmented" data-status-seg>'
+            +     '<button data-value="">— umumiy —</button>'
+            +     '<button data-value="PUBLISHED"' + (it.overrides.status === 'PUBLISHED' ? ' class="active"' : '') + '>Chop etilgan</button>'
+            +     '<button data-value="DRAFT"' + (it.overrides.status === 'DRAFT' ? ' class="active"' : '') + '>Qoralama</button>'
+            +   '</div>'
+            + '</div>'
+            + '<div class="field-block"><label>Featured</label>'
+            +   '<label class="toggle-row"><input type="checkbox" class="switch" data-field="featured"' + (it.overrides.featured ? ' checked' : '') + '>'
+            +   '<span class="label" data-featured-label style="color: ' + (it.overrides.featured ? 'var(--accent)' : 'var(--text-muted)') + ';">' + (it.overrides.featured ? 'Ha' : 'Umumiy/Yo\'q') + '</span></label>'
+            + '</div>';
+          ov.appendChild(row2);
+
+          const row3 = document.createElement('div');
+          row3.className = 'row wide';
+          row3.innerHTML = ''
+            + '<div class="field-block"><label>Tavsif (ixtiyoriy)</label>'
+            +   '<textarea rows="2" placeholder="Bir-ikki jumla tavsif…" data-field="description">' + (it.description || '') + '</textarea>'
+            + '</div>';
+          ov.appendChild(row3);
+
+          const line = document.createElement('div');
+          line.className = 'actions-line';
+          line.innerHTML = '<span class="note">Bu maydonlar bo\'sh bo\'lsa umumiy sozlamalar qo\'llanadi</span>'
+            + '<button class="btn ghost small" data-action="reset">O\'zgartirishlarni tozalash</button>';
+          ov.appendChild(line);
+
+          el.appendChild(ov);
+
+          // Bind
+          if (!it.overrides.status) {
+            ov.querySelector('[data-status-seg] button[data-value=""]').classList.add('active');
+          }
+          ov.querySelectorAll('[data-status-seg] button').forEach((btn) => {
+            btn.addEventListener('click', () => {
+              const v = btn.dataset.value;
+              ov.querySelectorAll('[data-status-seg] button').forEach((b) => b.classList.toggle('active', b === btn));
+              if (v) it.overrides.status = v; else delete it.overrides.status;
+              renderChipsInline(el, it);
+              scheduleSave();
+            });
+          });
+
+          ov.querySelectorAll('[data-field]').forEach((field) => {
+            const key = field.getAttribute('data-field');
+            const on = () => {
+              if (key === 'description') it.description = field.value.trim() || null;
+              else if (key === 'featured') {
+                it.overrides.featured = field.checked;
+                const lbl = ov.querySelector('[data-featured-label]');
+                if (lbl) {
+                  lbl.textContent = field.checked ? 'Ha' : 'Umumiy/Yo\'q';
+                  lbl.style.color = field.checked ? 'var(--accent)' : 'var(--text-muted)';
+                }
+              } else if (key === 'priceUZS') {
+                if (field.value === '') delete it.overrides.priceUZS;
+                else it.overrides.priceUZS = Number(field.value);
+              } else {
+                if (field.value.trim() === '') delete it.overrides[key];
+                else it.overrides[key] = field.value.trim();
+              }
+              renderChipsInline(el, it);
+              scheduleSave();
+            };
+            field.addEventListener('input', on);
+            field.addEventListener('change', on);
+          });
+
+          // Item tags (janrlar)
+          const tagsBox = ov.querySelector('[data-item-genres]');
+          const tagsInput = ov.querySelector('[data-tags-input]');
+          const renderItemTags = () => {
+            tagsBox.innerHTML = '';
+            const genres = it.overrides.genreNames || [];
+            for (const g of genres) {
+              const tag = document.createElement('button');
+              tag.type = 'button';
+              tag.className = 'pill active';
+              tag.innerHTML = '<span></span><button type="button" class="remove">&times;</button>';
+              tag.firstChild.textContent = g;
+              tag.querySelector('.remove').addEventListener('click', (e) => {
+                e.stopPropagation();
+                it.overrides.genreNames = (it.overrides.genreNames || []).filter((x) => x !== g);
+                if (it.overrides.genreNames.length === 0) delete it.overrides.genreNames;
+                renderItemTags();
+                renderChipsInline(el, it);
+                scheduleSave();
+              });
+              tagsBox.appendChild(tag);
+            }
+          };
+          const commitItem = () => {
+            const parts = tagsInput.value.split(',').map((s) => s.trim()).filter(Boolean);
+            if (parts.length === 0) return;
+            it.overrides.genreNames = it.overrides.genreNames || [];
+            for (const p of parts) if (!it.overrides.genreNames.includes(p)) it.overrides.genreNames.push(p);
+            tagsInput.value = '';
+            renderItemTags();
+            renderChipsInline(el, it);
+            scheduleSave();
+          };
+          tagsInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); commitItem(); }
+          });
+          tagsInput.addEventListener('blur', commitItem);
+          renderItemTags();
+
+          // Reset button
+          ov.querySelector('[data-action="reset"]').addEventListener('click', () => {
+            it.overrides = {};
+            it.description = null;
+            renderItems();
+            scheduleSave();
+          });
+        }
+
+        container.appendChild(el);
+      });
+    }
+
+    function renderChipsInline(itemEl, it) {
+      const overrideCount = countOverrides(it);
+      const chips = itemEl.querySelector('.chips');
+      if (!chips) return;
+      let badge = chips.querySelector('.chip.override');
+      if (overrideCount === 0) { if (badge) badge.remove(); return; }
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.className = 'chip override';
+        chips.appendChild(badge);
+      }
+      badge.textContent = overrideCount + ' o\'zgartirish';
+      itemEl.classList.toggle('has-override', overrideCount > 0);
+    }
+
+    // ============================================================
+    // JSON eksport
+    // ============================================================
+    function resolveItem(it) {
+      const ov = it.overrides || {};
+      const genreNames = (ov.genreNames && ov.genreNames.length > 0)
+        ? Array.from(new Set([...state.shared.genreNames, ...ov.genreNames]))
+        : Array.from(state.shared.genreNames);
+      const locationName = (ov.locationName && ov.locationName.trim() !== '')
+        ? ov.locationName.trim() : (state.shared.locationName || '').trim();
+      const capturedAt = ov.capturedAt || state.shared.capturedAt || todayIso();
+      const priceRaw = (ov.priceUZS != null && ov.priceUZS !== '') ? ov.priceUZS : state.shared.priceUZS;
+      const priceUZS = (priceRaw === '' || priceRaw == null) ? null : Number(priceRaw);
+      const featured = (ov.featured != null) ? !!ov.featured : !!state.shared.featured;
+      const status = ov.status || state.shared.status || 'PUBLISHED';
+      return {
+        originalFilename: it.filename,
+        type: it.type,
+        title: (it.title || '').trim() || guessTitle(it.filename),
+        description: it.description || null,
+        genreNames,
+        locationName,
+        capturedAt,
+        priceUZS,
+        featured,
+        status,
+        slugHint: slugify(it.title || guessTitle(it.filename)),
+        source: {
+          size: it.source.size,
+          mime: it.source.mime || null,
+          width: it.source.width || null,
+          height: it.source.height || null,
+          durationSec: it.source.durationSec || null,
+          lastModified: it.source.lastModified || null,
+        },
+      };
+    }
+
+    function validate() {
+      const errors = [];
+      if (state.items.length === 0) errors.push('Fayllar tanlanmagan');
+      if (state.shared.genreNames.length === 0) {
+        const missing = state.items.filter((it) => !(it.overrides.genreNames && it.overrides.genreNames.length > 0));
+        if (missing.length > 0) errors.push('Umumiy janr yo\'q va ' + missing.length + ' ta faylda ham janr yo\'q');
+      }
+      if (!state.shared.locationName.trim()) {
+        const missing = state.items.filter((it) => !(it.overrides.locationName && it.overrides.locationName.trim()));
+        if (missing.length > 0) errors.push('Umumiy joylashuv yo\'q va ' + missing.length + ' ta faylda ham joylashuv yo\'q');
+      }
+      return errors;
+    }
+
+    function exportJson() {
+      const errs = validate();
+      if (errs.length > 0) { toast(errs[0], 'err'); return; }
+      const items = state.items.map(resolveItem);
+      const payload = {
+        $schema: SCHEMA_ID,
+        version: SCHEMA_VERSION,
+        generatedAt: new Date().toISOString(),
+        count: items.length,
+        shared: {
+          genreNames: state.shared.genreNames.slice(),
+          locationName: state.shared.locationName.trim(),
+          capturedAt: state.shared.capturedAt,
+          priceUZS: state.shared.priceUZS === '' ? null : Number(state.shared.priceUZS),
+          featured: !!state.shared.featured,
+          status: state.shared.status,
+        },
+        items,
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const stamp = new Date().toISOString().slice(0, 19).replace(/[:]/g, '-');
+      a.href = url; a.download = 'metadata-' + stamp + '.json';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      toast('JSON yuklab olindi (' + items.length + ' ta)', 'ok');
+    }
+
+    // ============================================================
+    // JSON import (davom etish)
+    // ============================================================
+    async function importJson(file) {
+      try {
+        const text = await file.text();
+        const data = JSON.parse(text);
+        if (!data || data.$schema !== SCHEMA_ID) {
+          toast('Noto\'g\'ri JSON schema', 'err');
+          return;
+        }
+        if (data.shared) {
+          state.shared = {
+            genreNames: Array.isArray(data.shared.genreNames) ? data.shared.genreNames : [],
+            locationName: data.shared.locationName || '',
+            capturedAt: data.shared.capturedAt || todayIso(),
+            priceUZS: data.shared.priceUZS != null ? String(data.shared.priceUZS) : '',
+            featured: !!data.shared.featured,
+            status: data.shared.status || 'PUBLISHED',
+          };
+        }
+        if (Array.isArray(data.items)) {
+          savedByFilename.clear();
+          for (const it of data.items) {
+            if (it && it.originalFilename) {
+              savedByFilename.set(it.originalFilename, {
+                filename: it.originalFilename,
+                title: it.title,
+                description: it.description,
+                overrides: overridesFromResolved(it),
+              });
+            }
+          }
+        }
+        // UI ni yangilaymiz
+        document.getElementById('shared-location').value = state.shared.locationName;
+        document.getElementById('shared-date').value = state.shared.capturedAt;
+        document.getElementById('shared-price').value = state.shared.priceUZS;
+        document.getElementById('shared-featured').checked = state.shared.featured;
+        const featLbl = document.getElementById('shared-featured-label');
+        featLbl.textContent = state.shared.featured ? 'Ha' : 'Yo\'q';
+        featLbl.style.color = state.shared.featured ? 'var(--accent)' : 'var(--text-muted)';
+        document.querySelectorAll('#shared-status-seg button').forEach((b) => {
+          b.classList.toggle('active', b.dataset.value === state.shared.status);
+        });
+        renderSharedGenres();
+        scheduleSave();
+        toast('Import muvaffaqiyatli — endi shu fayllarni qayta tanlang', 'ok');
+      } catch (e) {
+        toast('JSON o\'qib bo\'lmadi: ' + e.message, 'err');
+      }
+    }
+
+    function overridesFromResolved(it) {
+      const ov = {};
+      const shared = new Set(state.shared.genreNames);
+      const itemGenres = Array.isArray(it.genreNames) ? it.genreNames : [];
+      const extras = itemGenres.filter((g) => !shared.has(g));
+      if (extras.length > 0) ov.genreNames = extras;
+      if (it.locationName && it.locationName !== state.shared.locationName) ov.locationName = it.locationName;
+      if (it.capturedAt && it.capturedAt !== state.shared.capturedAt) ov.capturedAt = it.capturedAt;
+      const sharedPrice = state.shared.priceUZS === '' ? null : Number(state.shared.priceUZS);
+      if (it.priceUZS != null && it.priceUZS !== sharedPrice) ov.priceUZS = it.priceUZS;
+      if (it.featured !== state.shared.featured) ov.featured = it.featured;
+      if (it.status && it.status !== state.shared.status) ov.status = it.status;
+      return ov;
+    }
+
+    // ============================================================
+    // Drop zone
+    // ============================================================
+    function initDrop() {
+      const drop = document.getElementById('drop');
+      const input = document.getElementById('file-input');
+      drop.addEventListener('click', (e) => { if (e.target !== input) input.click(); });
+      input.addEventListener('change', () => { addFiles(input.files); input.value = ''; });
+      ['dragenter', 'dragover'].forEach((ev) => {
+        drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add('drag'); });
+      });
+      ['dragleave', 'drop'].forEach((ev) => {
+        drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove('drag'); });
+      });
+      drop.addEventListener('drop', (e) => {
+        if (e.dataTransfer && e.dataTransfer.files) addFiles(e.dataTransfer.files);
+      });
+    }
+
+    // ============================================================
+    // Actions
+    // ============================================================
+    function initActions() {
+      document.getElementById('export-json').addEventListener('click', exportJson);
+      document.getElementById('load-json-btn').addEventListener('click', () => document.getElementById('load-json').click());
+      document.getElementById('load-json').addEventListener('change', (e) => {
+        const f = e.target.files && e.target.files[0];
+        if (f) importJson(f);
+        e.target.value = '';
+      });
+      document.getElementById('clear-all').addEventListener('click', () => {
+        if (state.items.length === 0) return;
+        if (!confirm(state.items.length + ' ta fayl tozalansinmi? Umumiy sozlamalar saqlanadi.')) return;
+        for (const it of state.items) if (it.previewUrl) URL.revokeObjectURL(it.previewUrl);
+        state.items = [];
+        renderItems(); renderStats(); scheduleSave();
+      });
+    }
+
+    // ============================================================
+    // Init
+    // ============================================================
+    function init() {
+      loadDraft();
+      initSharedFields();
+      initDrop();
+      initActions();
+      renderItems();
+      renderStats();
+      setDraftStatus('avtomatik');
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+    else init();
+  })();
+  </script>
+</body>
+</html>

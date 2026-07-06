@@ -1,0 +1,260 @@
+// PROMPT.md §3 asosidagi sxema. Identifikatorlar inglizcha, izohlar o'zbekcha.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ContentType {
+  PHOTO
+  VIDEO
+}
+
+enum ContentStatus {
+  PUBLISHED
+  DRAFT
+}
+
+enum CommentStatus {
+  PENDING
+  APPROVED
+}
+
+enum OrderStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Content {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  type        ContentType
+  title       String
+  description String?
+  // Bir kontent bir nechta janrga tegishli bo'lishi mumkin (masalan "Portret" +
+  // "Qizlar" bir vaqtda). Implicit M2M — Prisma `_ContentGenres` join jadvalini
+  // avtomatik boshqaradi.
+  genres      Genre[]       @relation("ContentGenres")
+  location    Location      @relation(fields: [locationId], references: [id])
+  locationId  String
+  capturedAt  DateTime
+  priceUZS    Int?
+  featured    Boolean       @default(false)
+  status      ContentStatus @default(PUBLISHED)
+  width       Int
+  height      Int
+  origWidth   Int?
+  origHeight  Int?
+  durationSec Int?
+  blurhash    String
+  originalKey String
+  previewKey  String
+  heroKey     String?
+  thumbKey    String
+  posterKey   String?
+  viewsCount  Int           @default(0)
+  comments    Comment[]
+  orders      Order[]
+  views       ContentView[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([status, createdAt])
+  @@index([locationId])
+  @@index([capturedAt])
+}
+
+model Genre {
+  id       String    @id @default(cuid())
+  name     String    @unique
+  slug     String    @unique
+  contents Content[] @relation("ContentGenres")
+}
+
+model Location {
+  id         String    @id @default(cuid())
+  name       String    @unique
+  slug       String    @unique
+  usageCount Int       @default(0)
+  lastUsedAt DateTime  @default(now())
+  contents   Content[]
+}
+
+model Comment {
+  id         String        @id @default(cuid())
+  // Kontentga bog'langan izoh — /p/<slug> lightbox'ida ko'rinadi.
+  // Bo'sh bo'lsa — bu "sahifa" izohi (`page` maydoni to'ldiriladi), masalan /donate.
+  content    Content?      @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  contentId  String?
+  // Sahifa izohlari uchun — "donate", "haqida" va h.k. Kontent izohi bo'lsa null.
+  page       String?
+  parent     Comment?      @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  parentId   String?
+  replies    Comment[]     @relation("CommentReplies")
+  name       String
+  text       String
+  // Ixtiyoriy ilova rasm — public storage'dagi kalit (webp).
+  imageKey   String?
+  status     CommentStatus @default(APPROVED)
+  isAdmin    Boolean       @default(false)
+  // Faqat `donate` sahifasidagi izohlar uchun — foydalanuvchi kiritgan qo'llash summasi (UZS).
+  // Boshqa sahifalarda va oddiy izohlarda null.
+  donateAmount Int?
+  likesCount Int           @default(0)
+  likes      CommentLike[]
+  ipHash     String?
+  createdAt  DateTime      @default(now())
+
+  @@index([contentId, createdAt])
+  @@index([page, createdAt])
+  @@index([status])
+  @@index([parentId])
+}
+
+model CommentLike {
+  id        String   @id @default(cuid())
+  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  commentId String
+  sessionId String
+  createdAt DateTime @default(now())
+
+  @@unique([commentId, sessionId])
+  @@index([sessionId])
+}
+
+model Order {
+  id             String      @id @default(cuid())
+  code           String      @unique
+  token          String      @unique
+  content        Content     @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  contentId      String
+  customerName   String
+  contact        String
+  note           String?
+  receiptKey     String?
+  priceUZS       Int
+  status         OrderStatus @default(PENDING)
+  rejectReason   String?
+  downloadCount  Int         @default(0)
+  maxDownloads   Int         @default(3)
+  expiresAt      DateTime?
+  approvedAt     DateTime?
+  createdAt      DateTime    @default(now())
+  ocrScore       Int?
+  ocrLevel       String?
+  ocrFindings    Json?
+  ocrText        String?
+  ocrProcessedAt DateTime?
+
+  @@index([status, createdAt])
+}
+
+model VisitorSession {
+  id           String        @id
+  firstSeenAt  DateTime      @default(now())
+  lastSeenAt   DateTime      @default(now())
+  device       String
+  referrer     String?
+  isAdmin      Boolean       @default(false)
+  pageViews    PageView[]
+  contentViews ContentView[]
+}
+
+model PageView {
+  id        String         @id @default(cuid())
+  session   VisitorSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sessionId String
+  path      String
+  createdAt DateTime       @default(now())
+
+  @@index([createdAt])
+  @@index([sessionId])
+}
+
+model ContentView {
+  id        String         @id @default(cuid())
+  session   VisitorSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sessionId String
+  content   Content        @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  contentId String
+  createdAt DateTime       @default(now())
+
+  @@unique([sessionId, contentId])
+  @@index([contentId])
+  @@index([createdAt])
+}
+
+model Setting {
+  key   String @id
+  value Json
+}
+
+model OrderCounter {
+  id  Int @id @default(1)
+  seq Int @default(42)
+}
+
+// Admin panelga kirish urinishlari. Ham muvaffaqiyatli, ham muvaffaqiyatsiz.
+// IP hashlangan, parol saqlanmaydi. Xavfsizlik audit va hujum patternlarini aniqlash uchun.
+model AdminLoginAttempt {
+  id        String   @id @default(cuid())
+  username  String
+  ipHash    String
+  userAgent String?
+  success   Boolean
+  // "invalid_credentials", "locked", "rate_limit", "honeypot", "dwell", "ok"
+  reason    String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([username, createdAt])
+  @@index([ipHash, createdAt])
+}
+
+// Admin sessiyasi — har login yaratiladi, logout/revoke bilan `revokedAt` belgilanadi.
+// Iron-session cookie ichida shu yozuvning `id`'si saqlanadi. Server har admin so'rovda
+// yozuvni tekshiradi va bekor qilingan cookie'lar avtomatik yaroqsiz bo'ladi.
+model AdminSessionRecord {
+  id             String    @id @default(cuid())
+  username       String
+  // IP hash — audit uchun. Xam-ol ko'rinishi (masked) alohida maydonda.
+  ipHash         String
+  ipDisplay      String
+  country        String?
+  city           String?
+  userAgent      String
+  deviceLabel    String
+  createdAt      DateTime  @default(now())
+  lastSeenAt     DateTime  @default(now())
+  revokedAt      DateTime?
+  // Kim tomonidan bekor qilingan: "self" (logout), "credentials" (parol o'zgardi),
+  // yoki boshqa sessiya ID'si (o'sha sessiyadan revoke qilingan)
+  revokedBy      String?
+  // Sozlamalardagi admin.sessionVersion bilan taqqoslash uchun. Parol/login almashsa
+  // barcha eski yozuvlar avtomatik yaroqsiz bo'ladi.
+  sessionVersion Int       @default(1)
+
+  @@index([username, revokedAt, lastSeenAt])
+  @@index([createdAt])
+}
+
+// Admin tomonidan bajarilgan muhim harakatlar (login, credential change, upload delete va h.k.).
+model AdminAuditLog {
+  id        String   @id @default(cuid())
+  actor     String
+  ipHash    String?
+  // "login", "logout", "credentials.update", "password.update", "content.delete", ...
+  action    String
+  // Ixtiyoriy: qaysi obyektga tegishli (contentId, orderId, va h.k.)
+  target    String?
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([action, createdAt])
+}

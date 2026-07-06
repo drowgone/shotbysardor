@@ -1,0 +1,13 @@
+node_modules
+.next
+.git
+.env
+.env.local
+.env.*.local
+storage/
+*.log
+.DS_Store
+.tesseract-cache/
+.vscode/
+.idea/
+README.md

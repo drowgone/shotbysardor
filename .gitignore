@@ -1,0 +1,59 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+.next/
+out/
+build/
+dist/
+
+# Environment (secrets — hech qachon commit qilmaslik)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.local
+
+# Fayl saqlash (local driver)
+storage/
+
+# Loglar
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Cache
+.tesseract-cache/
+.eslintcache
+.turbo
+.cache/
+
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Prisma local DB fayllari
+prisma/*.db
+prisma/*.db-journal
+
+# Sertifikat fayllar
+*.pem
+*.key
+*.crt

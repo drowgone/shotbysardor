@@ -1,0 +1,58 @@
+# shot by sardor — full stack (Postgres + Next.js app).
+# Ishga tushirish:  docker compose up -d --build
+# To'xtatish:      docker compose down
+# Log ko'rish:     docker compose logs -f app
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: shotbysardor
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-shotbysardor}
+      POSTGRES_DB: shotbysardor
+    volumes:
+      - shotbysardor_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shotbysardor -d shotbysardor"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    # `ports` ni prod'da tashqariga chiqarmaymiz — faqat ichki `db` xosti orqali.
+    # Local dev'da xohlasangiz shu blokni ochib qo'ying:
+    # ports:
+    #   - "5433:5432"
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # DB URL — container tarmog'i orqali `db` xosti bilan.
+      DATABASE_URL: postgresql://shotbysardor:${POSTGRES_PASSWORD:-shotbysardor}@db:5432/shotbysardor
+      SESSION_SECRET: ${SESSION_SECRET}
+      ADMIN_INITIAL_PASSWORD: ${ADMIN_INITIAL_PASSWORD:-admin12345}
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
+      STORAGE_DRIVER: ${STORAGE_DRIVER:-local}
+      R2_ACCOUNT_ID: ${R2_ACCOUNT_ID:-}
+      R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID:-}
+      R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY:-}
+      R2_BUCKET_PRIVATE: ${R2_BUCKET_PRIVATE:-}
+      R2_BUCKET_PUBLIC: ${R2_BUCKET_PUBLIC:-}
+      R2_PUBLIC_CDN_URL: ${R2_PUBLIC_CDN_URL:-}
+      MAX_PHOTO_MB: ${MAX_PHOTO_MB:-60}
+      MAX_VIDEO_MB: ${MAX_VIDEO_MB:-2048}
+      MAX_RECEIPT_MB: ${MAX_RECEIPT_MB:-10}
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    volumes:
+      # `STORAGE_DRIVER=local` bo'lganda barcha yuklamalar (originallar, preview,
+      # kvitansiyalar) shu volume'da saqlanadi — konteyner o'chsa ham qoladi.
+      - shotbysardor_storage:/app/storage
+
+volumes:
+  shotbysardor_db:
+  shotbysardor_storage:
