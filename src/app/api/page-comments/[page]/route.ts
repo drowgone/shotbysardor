@@ -36,7 +36,7 @@ export async function GET(
   if (!ALLOWED_PAGES.has(page)) return apiError(404, "not_found", "Sahifa topilmadi");
 
   const ip = clientIp(req);
-  const rl = rateLimit(`pagecomments:get:${ip}`, 60, 60_000);
+  const rl = await rateLimit(`pagecomments:get:${ip}`, 60, 60_000);
   if (!rl.ok) return apiError(429, "rate_limit", "Juda ko'p so'rov");
 
   const cursor = req.nextUrl.searchParams.get("cursor");
@@ -138,10 +138,10 @@ export async function POST(
   // Rate limit — admin uchun yumshoqroq (spam qilmasligi taxmin qilinadi).
   if (!isAdminPost) {
     const key = `pagecomment:${sid}:${ip}`;
-    const rl = rateLimit(key, 1, 30_000);
+    const rl = await rateLimit(key, 1, 30_000);
     if (!rl.ok) return apiError(429, "rate_limit", "Iltimos, biroz kutib turing.");
   } else {
-    const rl = rateLimit(`pagecomment:admin:${sid}`, 30, 60_000);
+    const rl = await rateLimit(`pagecomment:admin:${sid}`, 30, 60_000);
     if (!rl.ok) return apiError(429, "rate_limit", "Juda tez yozyapsiz");
   }
 

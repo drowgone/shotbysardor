@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
   if (!sid) return ok({ ok: false });
 
   // Per-sid + per-IP rate limit — hujumchi bir sessiyada ko'p pageview yozib DB'ni to'ldirmasin.
-  const rl = rateLimit(`track:${sid}:${ip}`, 60, 60_000);
+  const rl = await rateLimit(`track:${sid}:${ip}`, 60, 60_000);
   if (!rl.ok) return apiError(429, "rate_limit", "Juda ko'p so'rov");
 
   const { path } = (await req.json().catch(() => ({}))) as { path?: string };

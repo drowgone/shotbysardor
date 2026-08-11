@@ -12,7 +12,7 @@ const MAX_TOTAL_IDS = 5000;
 
 export async function GET(req: NextRequest) {
   const ip = clientIp(req);
-  const rl = rateLimit(`contents:get:${ip}`, 120, 60_000);
+  const rl = await rateLimit(`contents:get:${ip}`, 120, 60_000);
   if (!rl.ok) return apiError(429, "rate_limit", "Juda ko'p so'rov");
 
   const sp = req.nextUrl.searchParams;
