@@ -16,7 +16,7 @@ export async function POST(
   if (!sid) return apiError(400, "no_session", "Sessiya topilmadi");
 
   const ip = clientIp(req);
-  const rl = rateLimit(`like:${sid}:${ip}`, 20, 60_000);
+  const rl = await rateLimit(`like:${sid}:${ip}`, 20, 60_000);
   if (!rl.ok) return apiError(429, "rate_limit", "Iltimos, biroz kutib turing.");
 
   const comment = await prisma.comment.findUnique({

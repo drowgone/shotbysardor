@@ -57,20 +57,20 @@ export async function POST(req: NextRequest) {
   const userAgent = req.headers.get("user-agent") ?? null;
 
   // Global qattiq limit — barcha IP'lar bo'yicha. Botnet hujumiga qarshi so'nggi to'siq.
-  const globalRl = rateLimit("login:global:hard", 60, 15 * 60 * 1000);
+  const globalRl = await rateLimit("login:global:hard", 60, 15 * 60 * 1000);
   if (!globalRl.ok) {
     return apiError(429, "rate_limit", "Serverda ko'p urinish. Bir necha daqiqadan so'ng qayta urining.");
   }
 
   // IP darajasidagi qattiq limit.
-  const ipRl = rateLimit(ipKey, 8, 15 * 60 * 1000);
+  const ipRl = await rateLimit(ipKey, 8, 15 * 60 * 1000);
   if (!ipRl.ok) {
     void recordLoginAttempt({ username: "", ipHash, userAgent, success: false, reason: "rate_limit" });
     return apiError(429, "rate_limit", "Juda ko'p urinish. Keyinroq qayting.");
   }
 
   // Progressiv IP lockout.
-  const ipLock = isLocked(ipKey);
+  const ipLock = await isLocked(ipKey);
   if (ipLock.locked) {
     void recordLoginAttempt({ username: "", ipHash, userAgent, success: false, reason: "locked" });
     await jitter();
@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
   if (typeof parsed.data.ts === "number") {
     const dwell = Date.now() - parsed.data.ts;
     if (dwell >= 0 && dwell < 400) {
-      trackFail(ipKey, {
+      await trackFail(ipKey, {
         limit: 3,
         windowMs: 30 * 60 * 1000,
         escalations: [60_000, 5 * 60_000, 15 * 60_000],
@@ -128,7 +128,7 @@ export async function POST(req: NextRequest) {
   const userKey = `login:user:${submittedUser}`;
 
   // Foydalanuvchi darajasidagi bloklash.
-  const userLock = isLocked(userKey);
+  const userLock = await isLocked(userKey);
   if (userLock.locked) {
     void recordLoginAttempt({
       username: submittedUser,
@@ -162,19 +162,19 @@ export async function POST(req: NextRequest) {
 
   if (!success) {
     // IP: 5 urinishdan keyin 1 → 5 → 15 daqiqa lockout
-    trackFail(ipKey, {
+    await trackFail(ipKey, {
       limit: 5,
       windowMs: 30 * 60 * 1000,
       escalations: [60_000, 5 * 60_000, 15 * 60_000],
     });
     // Username: 6 urinishdan keyin 5 → 15 → 60 daqiqa lockout
-    const userLoc = trackFail(userKey, {
+    const userLoc = await trackFail(userKey, {
       limit: 6,
       windowMs: 30 * 60 * 1000,
       escalations: [5 * 60_000, 15 * 60_000, 60 * 60_000],
     });
     // Global: 30 urinishdan keyin 3 → 15 daqiqa
-    trackFail("login:global", {
+    await trackFail("login:global", {
       limit: 30,
       windowMs: 15 * 60 * 1000,
       escalations: [3 * 60_000, 15 * 60_000],
@@ -198,8 +198,8 @@ export async function POST(req: NextRequest) {
   }
 
   // Muvaffaqiyatli login — hisoblagichlarni tozalaymiz.
-  clearFail(ipKey);
-  clearFail(userKey);
+  await clearFail(ipKey);
+  await clearFail(userKey);
 
   const sessionVersion =
     ((await getSetting("admin.sessionVersion").catch(() => 1)) as number) ?? 1;

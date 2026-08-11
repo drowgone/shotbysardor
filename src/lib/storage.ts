@@ -105,6 +105,7 @@ class R2Storage implements StorageProvider {
         Key: key,
         Body: body,
         ContentType: contentType,
+        CacheControl: kind === "public" ? "public, max-age=31536000, immutable" : undefined,
       }),
     );
   }

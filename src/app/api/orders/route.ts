@@ -23,10 +23,10 @@ const schema = z.object({
 
 export async function POST(req: NextRequest) {
   const ip = clientIp(req);
-  const rl = rateLimit(`order:${ip}`, 5, 60 * 60 * 1000);
+  const rl = await rateLimit(`order:${ip}`, 5, 60 * 60 * 1000);
   if (!rl.ok) return apiError(429, "rate_limit", "Iltimos, keyinroq urinib ko'ring");
   // Global to'siq — botnet hujumida OCR CPU'ni charchashdan asraydi.
-  const globalRl = rateLimit("order:global", 60, 5 * 60 * 1000);
+  const globalRl = await rateLimit("order:global", 60, 5 * 60 * 1000);
   if (!globalRl.ok) return apiError(429, "rate_limit", "Serverda ko'p buyurtma. Bir necha daqiqadan so'ng qayta urining.");
 
   const form = await req.formData();

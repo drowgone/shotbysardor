@@ -10,7 +10,7 @@ import { emit } from "@/lib/live/bus";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const ip = clientIp(req);
-  const rl = rateLimit(`comments:get:${ip}`, 60, 60_000);
+  const rl = await rateLimit(`comments:get:${ip}`, 60, 60_000);
   if (!rl.ok) return apiError(429, "rate_limit", "Juda ko'p so'rov");
   const { slug } = await params;
   const cursor = req.nextUrl.searchParams.get("cursor");
@@ -87,7 +87,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
   const sid = jar.get("sid")?.value ?? "unknown";
   const ip = clientIp(req);
   const key = `comment:${sid}:${ip}`;
-  const rl = rateLimit(key, 1, 30_000);
+  const rl = await rateLimit(key, 1, 30_000);
   if (!rl.ok) return apiError(429, "rate_limit", "Iltimos, biroz kutib turing.");
 
   const body = await req.json().catch(() => null);

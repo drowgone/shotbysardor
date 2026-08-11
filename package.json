@@ -26,6 +26,7 @@
     "clsx": "^2.1.1",
     "fluent-ffmpeg": "^2.1.3",
     "framer-motion": "^11.11.17",
+    "ioredis": "^6.0.0",
     "iron-session": "^8.0.4",
     "lucide-react": "^0.454.0",
     "next": "^15.0.3",

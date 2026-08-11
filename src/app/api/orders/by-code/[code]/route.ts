@@ -23,10 +23,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ code
   const ip = clientIp(req);
   const ipHash = (await sha256(ip)).slice(0, 24);
 
-  const rl = rateLimit(`ordercode:ip:${ipHash}`, 10, 60_000);
+  const rl = await rateLimit(`ordercode:ip:${ipHash}`, 10, 60_000);
   if (!rl.ok) return apiError(429, "rate_limit", "Juda ko'p urinish. Bir necha daqiqadan so'ng qayta urining.");
 
-  const globalRl = rateLimit("ordercode:global", 300, 60_000);
+  const globalRl = await rateLimit("ordercode:global", 300, 60_000);
   if (!globalRl.ok) return apiError(429, "rate_limit", "Serverda ko'p urinish");
 
   const { code } = await params;
